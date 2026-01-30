@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -43,6 +44,21 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (result != null) {
+      setState(() {
+        _sharedFilePath = result.files.single.path;
+      });
+    } else {
+      // User canceled the picker
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -53,9 +69,29 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('PDF Viewer'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.file_open),
+              onPressed: _pickFile,
+              tooltip: 'Open PDF',
+            )
+          ],
         ),
         body: _sharedFilePath == null
-            ? const Center(child: Text('Open a PDF file to view it here.'))
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Open a PDF file to view it here.'),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: _pickFile,
+                      icon: const Icon(Icons.folder_open),
+                      label: const Text("Choose a PDF File"),
+                    ),
+                  ],
+                ),
+              )
             : PDFScreen(path: _sharedFilePath!),
       ),
     );
@@ -85,7 +121,7 @@ class _PDFScreenState extends State<PDFScreen> with WidgetsBindingObserver {
         PDFView(
           filePath: widget.path,
           enableSwipe: true,
-          swipeHorizontal: true,
+          swipeHorizontal: false, // Changed to vertical scrolling
           autoSpacing: false,
           pageFling: true,
           pageSnap: true,
